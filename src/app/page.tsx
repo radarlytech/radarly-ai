@@ -51,6 +51,14 @@ export default function Home() {
     fetchLeads();
   }, []);
 
+  // When user logs in (e.g. via Google OAuth or form), switch to radar dashboard
+  useEffect(() => {
+    if (user) {
+      setIsAuthModalOpen(false);
+      setActiveTab((prev) => (prev === 'landing' ? (pendingTabAfterAuth || 'radar') : prev));
+    }
+  }, [user, pendingTabAfterAuth]);
+
   const handleSignOut = async () => {
     await signOut();
     setActiveTab('landing');

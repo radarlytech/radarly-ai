@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState } from 'react';
 import { X, Lock, Mail, User, ArrowRight, CheckCircle2, ShieldCheck, Sparkles, KeyRound } from 'lucide-react';
@@ -80,19 +80,11 @@ export function AuthModal({
 
   const handleGoogleAuth = async () => {
     setIsLoading(true);
+    setError(null);
     try {
       await signInWithGoogle();
-      try {
-        confetti({
-          particleCount: 40,
-          spread: 50,
-          origin: { y: 0.6 }
-        });
-      } catch (e) {}
-      onClose();
     } catch (err: any) {
       setError(err.message || 'Google authentication failed.');
-    } finally {
       setIsLoading(false);
     }
   };

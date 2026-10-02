@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
@@ -99,12 +99,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const authUser: AuthUser = {
             id: session.user.id,
             email: session.user.email || '',
-            name: session.user.user_metadata?.full_name || session.user.email?.split('@')[0] || 'Member',
-            avatarUrl: session.user.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${session.user.id}`,
+            name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'Member',
+            avatarUrl: session.user.user_metadata?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(session.user.email || session.user.id)}`,
             plan: 'pro',
             createdAt: session.user.created_at
           };
           setUser(authUser);
+
+          // Fetch profile asynchronously
+          try {
+            const { data: profileData } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', session.user.id)
+              .single();
+
+            if (profileData) {
+              setProfile({
+                name: profileData.name || authUser.name,
+                role: profileData.role || DEFAULT_PROFILE.role,
+                skills: profileData.skills || DEFAULT_PROFILE.skills,
+                portfolioUrl: profileData.portfolio_url || DEFAULT_PROFILE.portfolioUrl,
+                turnaround: profileData.turnaround || DEFAULT_PROFILE.turnaround,
+                pricingAnchor: profileData.pricing_anchor || DEFAULT_PROFILE.pricingAnchor,
+                customPitchInstructions: profileData.custom_pitch_instructions || DEFAULT_PROFILE.customPitchInstructions
+              });
+              if (profileData.plan) {
+                setUser((prev) => (prev ? { ...prev, plan: profileData.plan } : prev));
+              }
+            }
+          } catch (e) {
+            console.warn('Could not fetch updated profile:', e);
+          }
         } else if (event === 'SIGNED_OUT') {
           setUser(null);
         }
@@ -232,12 +258,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signInWithGoogle = async () => {
     const supabase = createClient();
     if (supabase) {
-      await supabase.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}`
+          redirectTo: `${window.location.origin}/auth/callback`
         }
       });
+      if (error) {
+        throw error;
+      }
     } else {
       const googleUser: AuthUser = {
         id: 'usr_google_' + Math.random().toString(36).substring(2, 8),
