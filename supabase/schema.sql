@@ -1,5 +1,5 @@
 -- ==============================================================================
--- LeadHunter AI — Supabase Database Schema & Row Level Security (RLS)
+-- Radarly AI — Supabase Database Schema & Row Level Security (RLS)
 -- ==============================================================================
 
 -- 1. Create PROFILES Table
